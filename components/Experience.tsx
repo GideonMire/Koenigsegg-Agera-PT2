@@ -269,7 +269,8 @@ export const Experience: React.FC<ExperienceProps> = ({ setStep, freeRoam, freeL
           intensity={SUN_CONFIG.bloom_strength_hint} 
           radius={0.6} 
         />
-        <Noise opacity={0.12} />
+        {/* Reduced Noise opacity by 50% (0.12 -> 0.06) */}
+        <Noise opacity={0.06} />
         <Vignette eskil={false} offset={0.1} darkness={1.1} />
       </EffectComposer>
 
@@ -280,7 +281,7 @@ export const Experience: React.FC<ExperienceProps> = ({ setStep, freeRoam, freeL
         </>
       ) : (
         <ScrollControls pages={10} damping={0.5}>
-          <CameraRig setStep={setStep} carRef={carGroupRef} freeLook={freeLook} />
+          <CameraRig setStep={setStep} carRef={carGroupRef} freeLook={freeLook} smoothMode={true} />
           <SceneContent />
         </ScrollControls>
       )}

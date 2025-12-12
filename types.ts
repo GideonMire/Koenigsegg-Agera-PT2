@@ -5,6 +5,7 @@ export interface CameraPoint {
   target: Vector3;
   text?: string;
   subtext?: string;
+  description?: string;
 }
 
 export enum ChatRole {

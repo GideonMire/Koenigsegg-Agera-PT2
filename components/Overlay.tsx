@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { CAMERA_PATH } from '../constants';
 import { motion, AnimatePresence } from 'framer-motion';
 
@@ -6,52 +6,210 @@ interface OverlayProps {
   currentStep: number;
 }
 
+// --- CSS GLITCH TITLE COMPONENT ---
+const GlitchTitle = () => {
+  const [isGlitching, setIsGlitching] = useState(false);
+
+  useEffect(() => {
+    let timeoutId: ReturnType<typeof setTimeout>;
+
+    const triggerGlitch = () => {
+      setIsGlitching(true);
+      
+      // Glitch active duration (short burst)
+      setTimeout(() => {
+        setIsGlitching(false);
+        
+        // Schedule next glitch: Random time between 5s and 15s
+        const nextDelay = Math.random() * 10000 + 5000;
+        timeoutId = setTimeout(triggerGlitch, nextDelay);
+      }, 300);
+    };
+
+    // Initial delay before first glitch
+    timeoutId = setTimeout(triggerGlitch, 4000);
+
+    return () => clearTimeout(timeoutId);
+  }, []);
+
+  return (
+    <div className="glitch-container relative z-50">
+      <style>{`
+        .glitch-wrapper {
+          position: relative;
+          display: inline-block;
+        }
+
+        .glitch {
+          position: relative;
+          color: white;
+          font-weight: 700;
+          font-size: 3rem; 
+          letter-spacing: -0.05em;
+          text-transform: uppercase;
+        }
+        
+        @media (min-width: 768px) {
+          .glitch { font-size: 4rem; }
+        }
+
+        /* Pseudo-elements for the effect - Hidden by default */
+        .glitch::before,
+        .glitch::after {
+          content: attr(data-text);
+          position: absolute;
+          top: 0;
+          left: 0;
+          width: 100%;
+          height: 100%;
+          background: transparent; /* Removed black background to fix artifacts */
+          opacity: 0;
+          display: none; 
+        }
+
+        /* Active State: Show and Animate */
+        .glitch-active::before,
+        .glitch-active::after {
+          opacity: 0.8;
+          display: block;
+        }
+
+        .glitch-active::before {
+          left: 2px;
+          text-shadow: -2px 0 #ff00c1;
+          clip-path: inset(44% 0 61% 0);
+          animation: glitch-anim-1 0.3s infinite linear alternate-reverse;
+        }
+
+        .glitch-active::after {
+          left: -2px;
+          text-shadow: -2px 0 #00fff9;
+          clip-path: inset(56% 0 23% 0);
+          animation: glitch-anim-2 0.3s infinite linear alternate-reverse;
+        }
+
+        @keyframes glitch-anim-1 {
+          0% { clip-path: inset(20% 0 80% 0); transform: translate(-2px, 1px); }
+          20% { clip-path: inset(60% 0 10% 0); transform: translate(2px, -1px); }
+          40% { clip-path: inset(40% 0 50% 0); transform: translate(-2px, 2px); }
+          60% { clip-path: inset(80% 0 5% 0); transform: translate(2px, -2px); }
+          80% { clip-path: inset(10% 0 70% 0); transform: translate(-1px, 1px); }
+          100% { clip-path: inset(50% 0 20% 0); transform: translate(1px, -1px); }
+        }
+
+        @keyframes glitch-anim-2 {
+          0% { clip-path: inset(25% 0 55% 0); transform: translate(2px, -1px); }
+          20% { clip-path: inset(65% 0 15% 0); transform: translate(-2px, 1px); }
+          40% { clip-path: inset(15% 0 85% 0); transform: translate(2px, 0); }
+          60% { clip-path: inset(55% 0 25% 0); transform: translate(-2px, 0); }
+          80% { clip-path: inset(35% 0 45% 0); transform: translate(1px, -1px); }
+          100% { clip-path: inset(85% 0 5% 0); transform: translate(-1px, 1px); }
+        }
+      `}</style>
+      
+      <div className="glitch-wrapper">
+         <h1 
+            className={`glitch mix-blend-difference ${isGlitching ? 'glitch-active' : ''}`} 
+            data-text="PROJECT GHOST"
+         >
+            PROJECT GHOST
+         </h1>
+      </div>
+      <div className="h-1 w-24 bg-white mt-2"></div>
+    </div>
+  );
+};
+
 export const Overlay: React.FC<OverlayProps> = ({ currentStep }) => {
   const info = CAMERA_PATH[currentStep] || CAMERA_PATH[0];
 
   return (
-    <div className="absolute inset-0 pointer-events-none z-10 flex flex-col justify-between p-8 md:p-16">
+    <div className="absolute inset-0 pointer-events-none z-10 flex flex-col justify-between p-8 md:p-16 overflow-hidden">
       
       {/* Top Bar */}
-      <header className="flex justify-between items-start">
-        <div>
-          <h1 className="text-3xl md:text-5xl font-bold tracking-tighter mix-blend-difference text-white">
-            PROJECT GHOST
-          </h1>
-          <div className="h-1 w-24 bg-white mt-2"></div>
-        </div>
+      <header className="flex justify-between items-start shrink-0">
+        <GlitchTitle />
         <div className="text-right hidden md:block opacity-50">
           <p className="text-xs tracking-[0.3em]">CINEMATIC SEQUENCE</p>
           <p className="text-xs font-mono">SCROLL TO INTERACT</p>
         </div>
       </header>
 
-      {/* Dynamic Content based on Scroll Step */}
-      <section className="flex flex-col items-start justify-center h-full max-w-2xl">
-        <AnimatePresence mode="wait">
-          <motion.div
-            key={currentStep}
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: -20 }}
-            transition={{ duration: 0.5, ease: "easeOut" }}
-            className="space-y-4"
-          >
-            <h2 className="text-6xl md:text-8xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-white to-gray-500 uppercase tracking-tight">
-              {info.text}
-            </h2>
-            <div className="flex items-center gap-4">
-               <div className="h-px w-12 bg-green-500"></div>
-               <p className="text-lg md:text-xl text-green-400 font-mono tracking-widest uppercase">
-                 {info.subtext}
-               </p>
-            </div>
-          </motion.div>
-        </AnimatePresence>
-      </section>
+      {/* Main Content Area - Expands to fill space */}
+      <div className="flex-1 flex flex-col w-full max-w-4xl relative">
+        
+        {/* CENTER: Title & Subtitle (Vertically Centered in remaining space) */}
+        <div className="flex-1 flex flex-col justify-center items-start">
+          <AnimatePresence mode="wait">
+            <motion.div
+              key={`title-${currentStep}`}
+              initial={{ opacity: 0, x: -20 }}
+              animate={{ opacity: 1, x: 0 }}
+              exit={{ opacity: 0, x: 20 }}
+              transition={{ duration: 0.5, ease: "easeOut" }}
+              className="space-y-4"
+            >
+              {/* Title */}
+              <h2 
+                className="text-6xl md:text-8xl text-transparent bg-clip-text bg-gradient-to-r from-white to-gray-500 uppercase leading-[0.9]"
+                style={{ 
+                  fontFamily: '"Arial Narrow", Arial, sans-serif',
+                  fontWeight: 700,
+                  letterSpacing: '0.05em'
+                }}
+              >
+                {info.text}
+              </h2>
+              
+              {/* Subtitle */}
+              <div className="flex items-center gap-4">
+                 <div className="h-px w-12 bg-green-500"></div>
+                 <p 
+                   className="text-lg md:text-xl text-green-400 uppercase"
+                   style={{ 
+                     fontFamily: '"Arial Narrow", Arial, sans-serif',
+                     fontWeight: 500,
+                     letterSpacing: '0.03em'
+                   }}
+                 >
+                   {info.subtext}
+                 </p>
+              </div>
+            </motion.div>
+          </AnimatePresence>
+        </div>
+
+        {/* BOTTOM OF CONTENT AREA: Description */}
+        {/* mb-8 pushes it slightly up from the footer, ensuring it's "near" the bottom but not "at" it */}
+        <div className="mt-auto mb-12 md:mb-20"> 
+          <AnimatePresence mode="wait">
+             <motion.div
+                key={`desc-${currentStep}`}
+                initial={{ opacity: 0, y: 10 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: -10 }}
+                transition={{ duration: 0.5, delay: 0.2 }} // Slight delay for elegance
+             >
+                {info.description && (
+                   <p 
+                     className="text-sm md:text-base text-white/70 max-w-lg border-l border-white/20 pl-4 py-1"
+                     style={{ 
+                       fontFamily: '"Trebuchet MS", Verdana, sans-serif',
+                       fontWeight: 300,
+                       lineHeight: 1.5
+                     }}
+                   >
+                     {info.description}
+                   </p>
+                )}
+             </motion.div>
+          </AnimatePresence>
+        </div>
+
+      </div>
 
       {/* Footer / Progress */}
-      <footer className="flex justify-between items-end">
+      <footer className="flex justify-between items-end shrink-0">
         <div className="flex gap-2">
             {CAMERA_PATH.map((_, idx) => (
                 <div 
