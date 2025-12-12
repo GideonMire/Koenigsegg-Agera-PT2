@@ -8,12 +8,13 @@ import { AIChat } from './components/AIChat';
 const App = () => {
   const [currentStep, setCurrentStep] = useState(0);
   const [freeRoam, setFreeRoam] = useState(false);
+  const [freeLook, setFreeLook] = useState(false);
 
   return (
     <div className="w-full h-screen bg-[#050505] relative">
       {/* 3D Canvas */}
       <Canvas shadows camera={{ position: [0, 0, 5], fov: 35 }}>
-        <Experience setStep={setCurrentStep} freeRoam={freeRoam} />
+        <Experience setStep={setCurrentStep} freeRoam={freeRoam} freeLook={freeLook} />
       </Canvas>
       
       {/* UI Overlay (Hidden in Free Roam) */}
@@ -22,8 +23,19 @@ const App = () => {
       {/* AI Chat Widget */}
       <AIChat />
 
-      {/* Debug Toggle */}
-      <div className="fixed top-6 right-6 z-50">
+      {/* Control Buttons */}
+      <div className="fixed top-6 right-6 z-50 flex gap-2">
+        {/* Free Look Toggle (Only active in Cinematic Mode) */}
+        {!freeRoam && (
+          <button 
+              onClick={() => setFreeLook(!freeLook)}
+              className={`px-4 py-2 text-xs font-bold tracking-widest border rounded hover:bg-white hover:text-black transition-all uppercase ${freeLook ? 'bg-green-500 border-green-500 text-black' : 'bg-transparent border-white/20 text-white/50'}`}
+          >
+              {freeLook ? 'FREE LOOK ON' : 'FREE LOOK'}
+          </button>
+        )}
+
+        {/* Debug/Free Roam Toggle */}
         <button 
             onClick={() => setFreeRoam(!freeRoam)}
             className={`px-4 py-2 text-xs font-bold tracking-widest border rounded hover:bg-white hover:text-black transition-all uppercase ${freeRoam ? 'bg-red-500 border-red-500 text-white' : 'bg-transparent border-white/20 text-white/50'}`}

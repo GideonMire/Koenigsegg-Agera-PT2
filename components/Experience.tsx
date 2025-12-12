@@ -10,6 +10,7 @@ import { Group, Vector3, MathUtils } from 'three';
 interface ExperienceProps {
   setStep: (idx: number) => void;
   freeRoam: boolean;
+  freeLook: boolean;
 }
 
 // --- SUN DIRECTION & LIGHT COLOR PRD ---
@@ -193,7 +194,7 @@ const SpaceBackground = () => (
   </group>
 );
 
-export const Experience: React.FC<ExperienceProps> = ({ setStep, freeRoam }) => {
+export const Experience: React.FC<ExperienceProps> = ({ setStep, freeRoam, freeLook }) => {
   const controlsRef = useRef<any>(null);
   const carGroupRef = useRef<Group>(null);
 
@@ -279,7 +280,7 @@ export const Experience: React.FC<ExperienceProps> = ({ setStep, freeRoam }) => 
         </>
       ) : (
         <ScrollControls pages={10} damping={0.5}>
-          <CameraRig setStep={setStep} carRef={carGroupRef} />
+          <CameraRig setStep={setStep} carRef={carGroupRef} freeLook={freeLook} />
           <SceneContent />
         </ScrollControls>
       )}

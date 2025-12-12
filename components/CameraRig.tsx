@@ -7,11 +7,15 @@ import { CAMERA_PATH } from '../constants';
 interface CameraRigProps {
     setStep: (idx: number) => void;
     carRef: React.RefObject<Group>;
+    freeLook: boolean;
 }
 
-export const CameraRig: React.FC<CameraRigProps> = ({ setStep, carRef }) => {
+export const CameraRig: React.FC<CameraRigProps> = ({ setStep, carRef, freeLook }) => {
   const scroll = useScroll();
   const upVector = useMemo(() => new Vector3(0, 1, 0), []);
+  
+  // Store the dynamic offset for smooth transitions
+  const lookOffset = useRef(new Vector3(0, 0, 0));
 
   // Create curves for smooth path interpolation
   const { positionCurve, targetCurve } = useMemo(() => {
@@ -52,6 +56,38 @@ export const CameraRig: React.FC<CameraRigProps> = ({ setStep, carRef }) => {
         rawPoint.applyAxisAngle(upVector, rotationY);
         rawTarget.applyAxisAngle(upVector, rotationY);
     }
+
+    // --- FREE LOOK LOGIC ---
+    // If Free Look is enabled, we add an offset to the LOOK AT target based on mouse position.
+    // This makes the camera "look" towards the cursor.
+    if (freeLook) {
+        // Calculate camera basis vectors to ensure "Up" on screen maps to "Up" in 3D relative to view
+        const viewDir = new Vector3().subVectors(rawTarget, rawPoint).normalize();
+        const right = new Vector3().crossVectors(viewDir, upVector).normalize();
+        const camUp = new Vector3().crossVectors(right, viewDir).normalize();
+        
+        // Map pointer (-1 to 1) to a physical distance offset
+        // Sensitivity factor controls how "wide" the look range is
+        const SENSITIVITY = 3.0; 
+        
+        const targetX = state.pointer.x * SENSITIVITY;
+        const targetY = state.pointer.y * SENSITIVITY;
+
+        // Construct the desired offset vector in 3D space
+        const desiredOffset = new Vector3()
+             .addScaledVector(right, targetX)
+             .addScaledVector(camUp, targetY);
+        
+        // Smoothly interpolate current offset to desired offset (Damping)
+        lookOffset.current.lerp(desiredOffset, delta * 5);
+        
+    } else {
+        // Smoothly return to center if Free Look is disabled
+        lookOffset.current.lerp(new Vector3(0, 0, 0), delta * 5);
+    }
+
+    // Apply the offset to the final target
+    rawTarget.add(lookOffset.current);
 
     // Apply strict camera movement without handheld shake
     state.camera.position.copy(rawPoint);
